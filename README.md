@@ -1,6 +1,6 @@
 # INDI Driver for Argent Data Systems ADS-WS1 Weather Station
 
-An [INDI](https://indilib.org) 2.x weather driver for the **Argent Data Systems ADS-WS1** personal weather station. It reads the continuous serial data stream from the station, decodes all sensor fields, exposes them as INDI properties, and participates in INDI's weather-safety system so that observatory automation clients (KStars/Ekos, Voyager, etc.) can gate dome or mount operations on live weather conditions.
+An [INDI](https://indilib.org) 2.x weather driver for the **Argent Data Systems ADS-WS1** personal weather station. It reads the continuous serial data stream from the station, decodes all sensor fields, exposes them as INDI properties, and participates in INDI's weather-safety system so that observatory automation clients (KStars/Ekos, Galileo, etc.) can gate dome or mount operations on live weather conditions.
 
 ---
 
