@@ -82,9 +82,8 @@ sudo dnf install indi-devel cmake gcc-c++
 ```bash
 git clone https://github.com/gordtulloch/indi-argentweather.git
 cd indi-argentweather
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+cmake -S . -B build
+cmake --build build --parallel
 ```
 
 ---
@@ -92,15 +91,26 @@ make -j$(nproc)
 ## Installation
 
 ```bash
-sudo make install
+sudo cmake --install build
 ```
 
 This installs two files:
 
 | File | Destination |
 |------|-------------|
-| `indi_argentweather` | `/usr/bin/` (or `/usr/local/bin/`) |
+| `indi_argentweather` | `${CMAKE_INSTALL_PREFIX}/bin/` |
 | `indi_argentweather.xml` | INDI data directory (typically `/usr/share/indi/`) |
+
+The default install prefix is `/usr/local`. To install under `/usr`, configure
+with `cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr` before building. To stage
+an installation for packaging without writing to system directories, use:
+
+```bash
+DESTDIR=/tmp/indi-argentweather-package cmake --install build
+```
+
+The INDI device-definition directory can be overridden at configure time with
+`-DINDI_INSTALL_DATA_DIR=/path/to/indi`.
 
 After installation the driver appears in KStars under **Ekos → Profile Editor → Weather Stations → Argent ADS-WS1**.
 
@@ -117,7 +127,7 @@ The serial port is configured through the INDI client UI — no file editing is 
 3. In the driver's **Connection** tab, set **Serial Port** to the device node for your station, e.g.:
    - Linux USB-to-serial: `/dev/ttyUSB0` or `/dev/ttyUSB1`
    - Linux native serial: `/dev/ttyS0`
-4. The baud rate is pre-set to **2400**; leave it unchanged.
+4. The driver applies **2400 baud, 8N1** when connecting. libindi's generic baud selector does not include 2400; the driver's configured speed is applied regardless of that selector.
 5. Click **Connect**.
 
 The driver will wait up to 15 seconds for the first valid packet before declaring a connection failure. If you are unsure which port the station is on, run:

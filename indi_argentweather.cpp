@@ -28,9 +28,11 @@
 #include "indicom.h"
 #include "connectionplugins/connectionserial.h"
 
+#include <cerrno>
 #include <cmath>
 #include <cstring>
 #include <memory>
+#include <termios.h>
 
 // !! + 12 × 4 hex chars + \r\n = 52 bytes
 #define ARGENT_PACKET_LEN  52
@@ -111,8 +113,10 @@ bool ArgentWeather::initProperties()
     RainNP.fill(getDeviceName(), "ARGENT_RAIN", "Rainfall",
                 MAIN_CONTROL_TAB, IP_RO, 0, IPS_IDLE);
 
-    // ADS-WS1 transmits at 2400 baud
-    serialConnection->setDefaultBaudRate(Connection::Serial::B_2400);
+    // libindi's serial plugin does not expose 2400 baud. Set its nearest
+    // available default; Handshake() applies the ADS-WS1's required 2400 baud
+    // directly to the open port before reading data.
+    serialConnection->setDefaultBaudRate(Connection::Serial::B_9600);
 
     addAuxControls();
 
@@ -153,6 +157,25 @@ bool ArgentWeather::Handshake()
     {
         LOG_INFO("Simulation mode – ADS-WS1 connected.");
         return true;
+    }
+
+    termios options {};
+    if (tcgetattr(PortFD, &options) < 0)
+    {
+        LOGF_ERROR("Failed to read serial settings: %s", strerror(errno));
+        return false;
+    }
+
+    if (cfsetispeed(&options, B2400) < 0 || cfsetospeed(&options, B2400) < 0)
+    {
+        LOGF_ERROR("Failed to set serial speed to 2400 baud: %s", strerror(errno));
+        return false;
+    }
+
+    if (tcsetattr(PortFD, TCSANOW, &options) < 0)
+    {
+        LOGF_ERROR("Failed to apply 2400 baud serial settings: %s", strerror(errno));
+        return false;
     }
 
     char buf[ARGENT_BUF] = {0};
